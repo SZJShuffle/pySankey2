@@ -1,2 +1,2 @@
 # pySankey2
- Sankey diagrams with matplotlib
+Static sankey diagrams with matplotlib. 

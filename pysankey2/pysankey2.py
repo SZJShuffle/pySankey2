@@ -2,7 +2,6 @@ from collections import defaultdict
 from collections import OrderedDict
 from copy import deepcopy
 import matplotlib
-#matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.colors import to_hex
 
@@ -10,6 +9,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import math
+
 
 class SankeyException(Exception):
     pass
@@ -93,7 +93,7 @@ class Sankey:
         layerLabels:dict
             If passing, the provided layerLabels would determine the drawing order of each layer.
             If passing, dict keys must be named corresponding to column names of dataFrame.
-                e.g {'layer1':[cs1,cs2,cs4],'layer2':[cs2,cs4,cs2]}
+                e.g {'layer1':['label1','label2','label4'],'layer2':['label2','label5','label6']}
             If not passing, layerLabels would be extracted from the dataFrame.
         
         colorDict:dict
@@ -103,12 +103,12 @@ class Sankey:
             If choosing "global", a colorPalette dict that merged the same label in different layers would be taken.
             If choosing "layer", a colorPalette dict that treat the same label in different layers as independent label would be taken.
             For example, a layerLabels was: 
-                layerLabels = ['layer1':['cs1','cs2','cs3'],'layer2':['cs1','cs4']].
+                layerLabels = ['layer1':['label1','label2','label3'],'layer2':['label1','label4']].
             If choosing "global", colorPalette(aka colorDict) like:
-                {'cs1':'some color','cs2':'some color','cs3':'some color','cs4':'some color'} would be taken. 
+                {'label1':'some color','label2':'some color','label3':'some color','label4':'some color'} would be taken. 
             If choosing "layer", colorPalette(aka colorDict) like:
-                {'layer1':{'cs1':'some color','cs2':'some color','cs3':'some color'},
-                 'layer2':{'cs1':'some color','cs4':'some color'}} would be taken. 
+                {'layer1':{'label1':'some color','label2':'some color','label3':'some color'},
+                 'layer2':{'label1':'some color','label4':'some color'}} would be taken. 
         
         
         """
@@ -136,18 +136,12 @@ class Sankey:
         else:
             self._checkColorMatchLabels(colorDict,mode = colorMode)
             self._colorDict = colorDict
-        
-        # set box position
-        self._boxPos = self._setboxPos(self.dataFrame,self._layerLabels)
-        # set layer position
-        self._layerPos = self._setLayerPos(self._layerLabels)
-        # set strip width
-        self._stripWidths = self._setStripWidth(self._layerLabels,self.dataFrame)
-
 
     def _getColnamesMapping(self,dataFrame):
         """
-        Maintains a mapping relationship between old and new names.
+        Returns:
+        -------
+        dict: mapping relationship between old and new names.
         """
         return dict(zip(dataFrame.columns,['layer%d'%(i+1) for i in range(dataFrame.shape[1])]))
     
@@ -168,11 +162,10 @@ class Sankey:
         -------
         layerLabels:dict
             a layer-specific unique label dict(same labels in different layers would be treated as independent labels).
-            e.g {'layer1':[cs2,cs3,cs4],'layer2':[cs2,cs3,cs5]}
         """
         layerLabels = OrderedDict()
         for layer_label in dataFrame.columns:
-            layer_labels = list(df.loc[:,layer_label].unique()) # may contain NaN
+            layer_labels = list(dataFrame.loc[:,layer_label].unique()) # may contain NaN
             layer_labels = listRemoveNAN(layer_labels)
             layerLabels[layer_label] = layer_labels
         return layerLabels
@@ -180,19 +173,6 @@ class Sankey:
     def _checkLayerLabelsMatchDF(self,dataFrame,layerLabels,colnameMaps):
         """
         check whether the provided layer-specific labels match dataframe column names.
-        
-        Parameters:
-        ----------
-        dataFrame:pd.DataFrame.
-
-        layerLabels:dict
-            User provided lay-specific labels(keys corresponding to the old name of dataFrame columns).
-                e.g:{'day1':[1,2,3],'day3':[3,4,5]}
-        
-        colnameMaps:dict
-            Mapping between old and new dataFrame names.
-                e.g {'day1':'layer1','day3':'layer2'}
-        
         """
         for oldname,newname in colnameMaps.items():
             df_list = listRemoveNAN(dataFrame.loc[:,newname].unique())
@@ -221,7 +201,7 @@ class Sankey:
             # whether layer-specific labels match layerLabels
             for old_layer,layer_labels_map in colorDict.items():
                 provided_set = set(layer_labels_map.keys())
-                new_layer = self.colnameMaps[old_layer]
+                new_layer = self._colnameMaps[old_layer]
                 df_set = set(self.layerLabels[new_layer])
                 if provided_set !=df_set:
                     msg_provided = "Provided Color Labels:" + ",".join([str(i) for i in provided_set]) + "\n"
@@ -254,19 +234,13 @@ class Sankey:
                     i+=1
         return colorDict
 
-    def _setboxPos(self,dataFrame,layerLabels,boxInterv=0.02):
+    def _setboxPos(self,dataFrame,layerLabels,boxInterv):
         """
         Set y-axis coordinate position for each box.
-        Parameters:
-        ----------        
-        boxInterv:int/float,
-            Determine the vertical interval distance between boxes in the same layer.
-
+ 
         Returns:
         -------
-        boxPos:dict, contain y-axis position of each box:
-            boxPos[<layer>][<label>]['bottom']:bottom position of <label> in <layer>.
-            boxPos[<layer>][<label>]['top']:top position of <label> in <layer>.
+        boxPos:dict, contain y-axis position of each box.
         """
         boxPos = OrderedDict()
         for layer,labels in layerLabels.items():
@@ -280,28 +254,19 @@ class Sankey:
                     layerPos[label]['top'] = labelHeight
                 else:
                     prevLabelTop = layerPos[labels[i-1]]['top']
-                    layerPos[label]['bottom'] = prevLabelTop + boxInterv * dataFrame.loc[:,layer].sum()
+                    layerPos[label]['bottom'] = prevLabelTop + boxInterv * dataFrame.loc[:,layer].count()
                     layerPos[label]['top'] = layerPos[label]['bottom'] + labelHeight
             boxPos[layer] = layerPos
         
         return boxPos    
     
-    def _setLayerPos(self,layerLabels,boxWidth=1,stripLen=5):
+    def _setLayerPos(self,layerLabels,boxWidth,stripLen):
         """
         Set x-axis coordinate position for each layer.
-        Parameters:
-        ----------   
-        boxWidth:int/float,
-            the width of layer.
-        
-        stripLen:int/float,
-            the length of strip.
         
         Returns:
         --------
-        layerPos:dict, contain x-axis position of each layer:
-            layerPos[<layer>]['layerStart']:start position of x-axis for <layer>.
-            layerPos[<layer>]['layerEnd']:end position of x-axis for <layer>.
+        layerPos:dict, contain x-axis position of each layer.
         """
         layerPos = defaultdict(dict) 
         layerStart = 0
@@ -320,8 +285,8 @@ class Sankey:
         Set the width of strip(i.e. the size of a transfer pair).
         Returns:
         -------
-        stripWidths:nested dict, stripWidths[layer][leftLabel][rightLabel] = width: 
-           <leftLabel> in <layer> has a link with <rightLabel>(in the next layer) , where the size/width of link equals <width>.
+        stripWidths:nested dict, stripWidths['layer'][leftLabel][rightLabel] = width: 
+           <leftLabel> in 'layer' has a link with <rightLabel>(in the next layer) , where the size/width of link equals <width>.
 
         """
         layers = list(layerLabels.keys())
@@ -342,28 +307,24 @@ class Sankey:
                         stripWidths[leftLayer][leftLabel][rightLabel] = width
 
         return stripWidths
-
- 
             
-    def _setStripPos(self,leftBottom,rightBottom,leftTop,rightTop,kernelSize=20):
+    def _setStripPos(self,leftBottom,rightBottom,leftTop,rightTop,kernelSize,stripShrink):
         """
-        Using onvolution to make the curve smooth:
-        Create array of y values for each strip, half at left value,half at right.
-        
-        Param:
-            kernelSize: control the smooth degree of strip.
+        Smooth the strip by convolution, and create array of y values for each strip.
+
+
         """
         ys_bottom = np.array(50 * [leftBottom] + 50 * [rightBottom])
-        ys_bottom = np.convolve(ys_bottom, 0.05 * np.ones(kernelSize), mode='valid')
-        ys_bottom = np.convolve(ys_bottom, 0.05 * np.ones(kernelSize), mode='valid')
+        ys_bottom = np.convolve(ys_bottom + stripShrink, (1/kernelSize) * np.ones(kernelSize), mode='valid')
+        ys_bottom = np.convolve(ys_bottom + stripShrink, (1/kernelSize) * np.ones(kernelSize), mode='valid')
         
         ys_top = np.array(50 * [leftTop] + 50 * [rightTop])
-        ys_top = np.convolve(ys_top, 0.05 * np.ones(kernelSize), mode='valid')
-        ys_top = np.convolve(ys_top, 0.05 * np.ones(kernelSize), mode='valid')    
+        ys_top = np.convolve(ys_top - stripShrink, (1/kernelSize) * np.ones(kernelSize), mode='valid')
+        ys_top = np.convolve(ys_top - stripShrink,(1/kernelSize) * np.ones(kernelSize), mode='valid')    
 
         return ys_bottom,ys_top
 
-    def _plotBox(self,ax,boxPos,layerPos,layerLabels,colorDict,fontSize,box_kws,text_kws):
+    def _plotBox(self,ax,boxPos,layerPos,layerLabels,colorDict,fontSize,fontPos,box_kws,text_kws):
         """
         Render the box according to box-position(boxPos) and layer-position(layerPos).
 
@@ -388,21 +349,23 @@ class Sankey:
                     **box_kws
                 )
                 # text annotation of each box
+                distToBoxLeft = fontPos[0]
+                distToBoxBottom = fontPos[1]
                 ax.text(
-                    (layerStart + layerEnd)/2,
-                    (labelBot + labelTop)/2,
+                    (layerStart + distToBoxLeft),
+                    (labelBot + (labelTop - labelBot)* distToBoxBottom),
                     label,
                     {'ha': 'right', 'va': 'center'},
                     fontsize=fontSize,
                     **text_kws)
 
-    def _plotStrip(self,ax,dataFrame,layerLabels,boxPos,layerPos,stripWidths,strip_kws):
+    def _plotStrip(self,ax,dataFrame,layerLabels,boxPos,layerPos,stripWidths,kernelSize,stripShrink,strip_kws):
         """
         Render the strip according to box-position(boxPos), layer-position(layerPos) and strip width(stripWidths).
         """
         layers = list(layerLabels.keys())
         for i,layer in enumerate(layers):
-            # the last layer does not need strip.stripWidths
+            # the last layer does not need strip.
             if i == len(layers) -1:
                 break
             leftLayer = layers[i]
@@ -421,7 +384,7 @@ class Sankey:
                         rightBottom = boxPosProxy[rightLayer][rightLabel]['bottom']
                         rightTop = rightBottom + stripWidths[layer][leftLabel][rightLabel] 
 
-                        ys_bottom,ys_top = self._setStripPos(leftBottom,rightBottom,leftTop,rightTop)
+                        ys_bottom,ys_top = self._setStripPos(leftBottom,rightBottom,leftTop,rightTop,kernelSize = kernelSize,stripShrink = stripShrink)
                         
                         # Update bottom edges at each label so next strip starts at the right place
                         boxPosProxy[leftLayer][leftLabel]['bottom'] = leftTop
@@ -432,17 +395,77 @@ class Sankey:
                         x_end = layerPos[rightLayer]['layerStart']
                         # TODO: params control
                         ax.fill_between(
-                            np.linspace(x_start, x_end, len(ys_top)), ys_bottom, ys_top, alpha=0.3,
+                            np.linspace(x_start, x_end, len(ys_top)), ys_bottom, ys_top, alpha=0.4,
                             color='grey',
-                            edgecolor='black',lw=2,
+                            #edgecolor='black',
                             **strip_kws
                         )
 
-    def plot(self,figSize=(10,10),fontSize=10,
-                    box_kws=None,text_kws=None,strip_kws=None,savePath=None):
+    def plot(self,figSize=(10,10),
+                    fontSize=10,fontPos=(-0.15,0.5),
+                    boxInterv=0.02,
+                    boxWidth=2,stripLen=10,
+                    kernelSize=25,stripShrink=0,
+                    box_kws=None,text_kws=None,strip_kws=None,
+                    savePath=None):
         """
+        Draw a Sankey diagram.
+
+        Parameters:
+        ----------   
+        figSize:(float, float), default=(10,10).
+            Width, height of figure in inches.
+
+        fontSize:float, default=10.
+            Size of font.
+
+        fontPos:(float, float), default=(-0.15,0.5).
+            Distance(calculated as a percentage) to the left/bottom of box.
+            For example, -0.15 means that the real distance to the left of the box is -0.15 * boxWidth, and 
+            the real distance to the bottom of the box is 0.5 * boxHeight.
+
+        boxInterv:float, default=0.02.
+            Vertical interval distance between boxes in the same layer.
+
+        boxWidth:float, default=2.
+            Width of layer.
         
+        stripLen:float, default=10.
+            Length of strip.
+        
+        kernelSize:int, default=25.
+            Convolution kernel size, used to control the smoothness of strip, 
+        
+        stripShrink:float,default=0.
+            Shrink extend of strip, used to compress the strip width.
+        
+        box_kws:
+            Additional keyword arguments, which would be passed to plt.fill_between().
+
+        text_kws:
+            Additional keyword arguments, which would be passed to plt.text().
+        
+        strip_kws:
+            Additional keyword arguments, which would be passed to plt.fill_between().
+
+        savePath:
+            name to save the figure.
+        
+        Returns:
+        --------
+        fig:matplotlib Figure.
+            The Figure object containing the plot.
+        
+        ax:matplotlib Axes
+            The Axes object containing the plot.
         """
+        # set box position
+        self._boxPos = self._setboxPos(self.dataFrame,self._layerLabels,boxInterv = boxInterv)
+        # set layer position
+        self._layerPos = self._setLayerPos(self._layerLabels,boxWidth = boxWidth , stripLen = stripLen)
+        # set strip width
+        self._stripWidths = self._setStripWidth(self._layerLabels,self.dataFrame)
+
         plt.rc('text', usetex=False)
         plt.rc('font', family='Arial')
         fig = plt.figure(figsize = figSize)
@@ -451,46 +474,77 @@ class Sankey:
         # plot box
         if box_kws is None:box_kws = {} 
         if text_kws is None:text_kws = {}
-        self._plotBox(ax,self._boxPos,self._layerPos,self._layerLabels,self._colorDict,fontSize = fontSize,
+
+        distToBoxLeft = boxWidth * fontPos[0]
+        distToBoxBottom = fontPos[1]
+        self._plotBox(ax,self._boxPos,self._layerPos,self._layerLabels,self._colorDict,
+                        fontSize = fontSize,fontPos = (distToBoxLeft,distToBoxBottom),
                         box_kws = box_kws,text_kws = text_kws)
 
         # plot strip
         if strip_kws is None:strip_kws = {}
-        self._plotStrip(ax,self.dataFrame,self._layerLabels,self._boxPos,self._layerPos,self._stripWidths,strip_kws)
+        self._plotStrip(ax,self.dataFrame,self._layerLabels,self._boxPos,self._layerPos,self._stripWidths,kernelSize,stripShrink,strip_kws)
         plt.gca().axis('off')
 
         if savePath != None:
-            plt.savefig(savePath, bbox_inches='tight', dpi=600)
+            plt.savefig(savePath, bbox_inches='tight', dpi=800)
         
         return fig,ax
 
     @property
     def colnameMaps(self):
+        """
+        dict, mapping between old and new dataFrame names(e.g. {'old_colname1':'layer1','old_colname2':'layer2'})        
+        """
+
         return self._colnameMaps
     
     @property
     def labels(self):
+        """
+        list, set of labels in the data.
+        """
         return self._allLabels
 
     @property
     def layerLabels(self):
+        """
+        dict, set of layer specific labels in the data.(e.g. {'layer1':['label1','label2','label4'],'layer2':['label1','label3','label5']})
+        """
         return self._layerLabels
     
     @property
     def boxPos(self):
+        """
+        dict, contain y-axis position of each box:
+            boxPos['layer']['label']['bottom']:bottom position of 'label' in 'layer'.
+            boxPos['layer']['label']['top']:top position of 'label' in 'layer'.        
+        """
         return self._boxPos
 
     @property
     def layerPos(self):
+        """
+        dict, contain x-axis position of each layer:
+            layerPos['layer']['layerStart']:start position of x-axis for 'layer'.
+            layerPos['layer']['layerEnd']:end position of x-axis for 'layer'.       
+        """
         return self._layerPos
     
     @property
     def stripWidth(self):
+        """
+        dict, stripWidths['layer'][leftLabel][rightLabel] = width: 
+           <leftLabel> in 'layer' has a link with <rightLabel>(in the next layer) , where the size/width of link equals <width>.        
+        """
         return self._stripWidths
     
 
     @property
     def colorDict(self):
+        """
+        dict, see doc strings of colorMode in __init__ for details.
+        """
         return self._colorDict        
 
 
@@ -519,7 +573,8 @@ if __name__ == "__main__":
     sk2 = Sankey(df,layerLabels=sk2_layerlabs,colorDict= sk2_lycolors,colorMode = "layer")
     print("ColorMap(User layer)",sk2.colorDict)
 
-
+    fig,ax = sk.plot(#boxInterv=0,
+                    box_kws={'edgecolor':'black'})
     print('boxPos:',sk.boxPos)
     print('boxPos[layer1]:',sk.boxPos['layer1'])
     print('boxPos[layer2]:',sk.boxPos['layer2'])
@@ -534,6 +589,6 @@ if __name__ == "__main__":
 
     
     
-    ax = sk2.plot()
+    
     plt.show()
     print("done")
