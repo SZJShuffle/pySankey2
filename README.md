@@ -31,7 +31,7 @@ fig,ax = sky.plot()
 
 we get:
 
-![fruits](./pysankey2/example/fruit_1.png)
+![fruits](./example/fruit_1.png)
 
 ## Example2:Multi-layer
 
@@ -59,7 +59,7 @@ plt.show()
 
 we get:
 
-![countrys](./pysankey2/example/country_1.png)
+![countrys](./example/country_1.png)
 
 
 
