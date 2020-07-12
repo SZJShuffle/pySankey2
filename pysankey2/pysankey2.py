@@ -56,7 +56,7 @@ class Sankey:
         
         """
 
-        self.dataFrame = dataFrame
+        self.dataFrame = deepcopy(dataFrame)
         # get mapping between old and new column names & rename columns.
         self._colnameMaps = self._getColnamesMapping(self.dataFrame)
         self.dataFrame.columns = ['layer%d'%(i+1) for i in range(dataFrame.shape[1])] 
@@ -71,13 +71,15 @@ class Sankey:
         
         # colors
         self.colorMode = colorMode
-        opts=["global","layer"]
-        if colorMode not in opts:
-            raise ValueError("colorMode options don't support:{0}".format(colorMode))       
+        _opts=["global","layer"]
+        if colorMode not in _opts:
+            raise ValueError("colorMode options must be one of:{0} ".format(",".join([i for i in _opts])))       
         if colorDict is None:
             self._colorDict = self._setColorDict(self._layerLabels,mode = colorMode)
         else:
             self._checkColorMatchLabels(colorDict,mode = colorMode)
+            if colorMode == "layer":
+                colorDict = self._renameColorDict(colorDict)
             self._colorDict = colorDict
 
     def _getColnamesMapping(self,dataFrame):
@@ -131,7 +133,7 @@ class Sankey:
 
     def _checkColorMatchLabels(self,colorDict,mode):
         """
-        check if labels in the provided colorDict are the same as those in the dataFrame.
+        check if labels in provided colorDict are identical to those in dataFrame.
         """
         if mode == "global":
             provided_set = set(colorDict.keys())
@@ -149,7 +151,7 @@ class Sankey:
                 if provided_set !=df_set:
                     msg_provided = "Provided Color Labels:" + ",".join([str(i) for i in provided_set]) + "\n"
                     msg_df = "dataFrame Labels:" + ",".join([str(i) for i in df_set]) + "\n"
-                    raise LabelMismatchError('{0} do not match with {1}'.format(msg_provided, msg_df))            
+                    raise LabelMismatchError('In {0},{1} do not match with {1}'.format(new_layer,msg_provided, msg_df))            
     
     def _setColorDict(self,layerLabels,mode):
         """
@@ -175,6 +177,14 @@ class Sankey:
                 for layer_label in layer_labels:
                     colorDict[layer][layer_label] = colorPalette[i]
                     i+=1
+        return colorDict
+
+    def _renameColorDict(self,colorDict):
+        """rename keys of colordict from old column names to 'layer'"""
+
+        for old_name,new_name in self.colnameMaps.items():
+            colorDict[new_name]=colorDict[old_name]
+            del colorDict[old_name]
         return colorDict
 
     def _setboxPos(self,dataFrame,layerLabels,boxInterv):
@@ -403,11 +413,16 @@ class Sankey:
             The Axes object containing the plot.
         """
         # set box position
-        self._boxPos = self._setboxPos(self.dataFrame,self._layerLabels,boxInterv = boxInterv)
+        self._boxPos = self._setboxPos(self.dataFrame,
+                                        self._layerLabels,
+                                        boxInterv = boxInterv)
         # set layer position
-        self._layerPos = self._setLayerPos(self._layerLabels,boxWidth = boxWidth , stripLen = stripLen)
+        self._layerPos = self._setLayerPos(self._layerLabels,
+                                            boxWidth = boxWidth , 
+                                            stripLen = stripLen)
         # set strip width
-        self._stripWidths = self._setStripWidth(self._layerLabels,self.dataFrame)
+        self._stripWidths = self._setStripWidth(self._layerLabels,
+                                                self.dataFrame)
 
         plt.rc('text', usetex=False)
         plt.rc('font', family='Arial')
@@ -417,16 +432,36 @@ class Sankey:
         # plot box
         if box_kws is None:box_kws = {} 
         if text_kws is None:text_kws = {}
-
+        if not isinstance(box_kws,dict):
+            raise TypeError("box_kws must be dict.")
+        if not isinstance(text_kws,dict):
+            raise TypeError("text_kws must be dict.")
+        
         distToBoxLeft = boxWidth * fontPos[0]
         distToBoxBottom = fontPos[1]
-        self._plotBox(ax,self._boxPos,self._layerPos,self._layerLabels,self._colorDict,
-                        fontSize = fontSize,fontPos = (distToBoxLeft,distToBoxBottom),
-                        box_kws = box_kws,text_kws = text_kws)
+        self._plotBox(ax,
+                      self._boxPos,
+                      self._layerPos,
+                      self._layerLabels,
+                      self._colorDict,
+                      fontSize = fontSize,
+                      fontPos = (distToBoxLeft,distToBoxBottom),
+                      box_kws = box_kws,
+                      text_kws = text_kws)
 
         # plot strip
         if strip_kws is None:strip_kws = {}
-        self._plotStrip(ax,self.dataFrame,self._layerLabels,self._boxPos,self._layerPos,self._stripWidths,kernelSize,stripShrink,strip_kws)
+        if not isinstance(strip_kws,dict):
+            raise TypeError("strip_kws must be dict.")
+        self._plotStrip(ax,s
+                        self.dataFrame,
+                        self._layerLabels,
+                        self._boxPos,
+                        self._layerPos,
+                        self._stripWidths,
+                        kernelSize,
+                        stripShrink,
+                        strip_kws)
         plt.gca().axis('off')
 
         if savePath != None:
