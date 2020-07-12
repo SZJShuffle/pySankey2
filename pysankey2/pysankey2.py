@@ -453,7 +453,7 @@ class Sankey:
         if strip_kws is None:strip_kws = {}
         if not isinstance(strip_kws,dict):
             raise TypeError("strip_kws must be dict.")
-        self._plotStrip(ax,s
+        self._plotStrip(ax,
                         self.dataFrame,
                         self._layerLabels,
                         self._boxPos,
@@ -524,49 +524,3 @@ class Sankey:
         dict, see doc strings of colorMode in __init__ for details.
         """
         return self._colorDict        
-
-
-if __name__ == "__main__":
-    df = pd.DataFrame({'layer1':[1,1,1,1,1,2,2,2,2,2,2,4,4],'layer2':[3,3,3,3,3,3,3,3,3,3,3,6,6],
-                  'layer3':[np.nan,np.nan,np.nan,np.nan,np.nan,1,1,1,1,1,1,5,6]})
-    sk2_layerlabs = {'layer1':[1,2,4],'layer2':[3,6],'layer3':[1,5,6]}
-    sk = Sankey(df)
-    sk2 = Sankey(df,layerLabels=sk2_layerlabs)
-    
-
-    print("Mapping:",sk.colnameMaps)
-    print("labels:",sk.labels)
-    print('layerLabels:',sk.layerLabels)
-    print('layerLabels:',sk2.layerLabels)
-
-    ### colors 
-    print("ColorMap(global)",sk.colorDict)
-    sk = Sankey(df,colorMode="layer")
-    print("ColorMap(layer)",sk.colorDict)
-    # user specific
-    sk2_glbcolors = {1:'grey',2:'grey',3:'grey',4:'grey',5:'grey',6:'grey'}
-    sk2 = Sankey(df,layerLabels=sk2_layerlabs,colorDict= sk2_glbcolors)
-    print("ColorMap(User global)",sk2.colorDict)
-    sk2_lycolors = {'layer1':{1:'#1f77b4',2:'grey',4:'#aec7e8'},'layer2':{3:'#8c564b',6:'grey'},'layer3':{1:'#ff9896',5:'grey',6:'grey'}}
-    sk2 = Sankey(df,layerLabels=sk2_layerlabs,colorDict= sk2_lycolors,colorMode = "layer")
-    print("ColorMap(User layer)",sk2.colorDict)
-
-    fig,ax = sk.plot(#boxInterv=0,
-                    box_kws={'edgecolor':'black'})
-    print('boxPos:',sk.boxPos)
-    print('boxPos[layer1]:',sk.boxPos['layer1'])
-    print('boxPos[layer2]:',sk.boxPos['layer2'])
-    print('boxPos[layer3]:',sk.boxPos['layer3'])
-    
-    print('layerPos:',sk.layerPos)
-
-    print('stripWidth:',sk.stripWidth)
-    print('stripWidth[layer1]:',sk.stripWidth['layer1'])
-    print('stripWidth[layer2]:',sk.stripWidth['layer2'])
-
-
-    
-    
-    
-    plt.show()
-    print("done")
