@@ -1,4 +1,3 @@
-layer1	layer2	layer3
 China	Canada	USA
 England	China	Japan
 USA	USA	England

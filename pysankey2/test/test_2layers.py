@@ -103,7 +103,7 @@ class TestTwolayers(unittest.TestCase):
                 continue
             if "layer_colors" in sky:
                 self.assertEqual(testCase['colors']['layer_colors'],testCase['sankeys'][sky].colorDict)
-            else:
+            elif "global_colors" in sky:
                 # global_colors
                 self.assertEqual(testCase['colors']['global_colors'],testCase['sankeys'][sky].colorDict)
 
@@ -150,7 +150,7 @@ if __name__ == "__main__":
     df_layer = pd.read_csv("./test/data/fruits.txt",sep=" ",header=None,names=['layer1', 'layer2'])
     
     # labels
-    global_labels = list(set(df.From) & set(df.To))
+    global_labels =  list(set(df.From).union(set(df.To)))
     layer_labels = {"layer1":list(set(df_layer.layer1)),"layer2":list(set(df_layer.layer2))}
     layer_labels_specified = {'layer1':['apple','banana','blueberry', 'lime', 'orange'],
                             'layer2':['apple','banana','blueberry', 'lime', 'orange']}
@@ -211,8 +211,5 @@ if __name__ == "__main__":
 
     testCase['colnames']['colname_layer_map'] = colmaps
     testCase['colnames']['layer_layer_map'] = colmaps_layer
-
-    testCase['colnames']['colname_layer_map'] = colmaps
-    testCase['colnames']['layer_layer_map'] = colmaps_layer    
 
     unittest.main()
