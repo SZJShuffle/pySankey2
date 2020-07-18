@@ -51,7 +51,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from pysankey2 import Sankey
 
-df = pd.read_csv("./pysankey2/test/data/countrys.txt",sep="\t")
+df  = pd.read_csv("./pysankey2/test/data/countrys.txt",sep="\t",header=None,names=['First', 'Mid','Last'])
 sky = Sankey(df,colorMode="global")
 fig,ax = sky.plot()
 plt.show()

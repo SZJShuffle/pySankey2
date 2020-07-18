@@ -2,23 +2,13 @@ import os
 import sys
 sys.path.append(os.path.realpath('.'))
 import pandas as pd
-from collections import defaultdict
-from pysankey2 import LabelMismatchError
-from pysankey2 import Sankey
-from utils import setColorConf,listRemoveNAN
-import unittest
 import matplotlib.pyplot as plt
-
-
-
-import os
-import sys
-sys.path.append(os.path.realpath('.'))
-import pandas as pd
 from collections import defaultdict
+
 from pysankey2 import LabelMismatchError
 from pysankey2 import Sankey
 from utils import setColorConf,listRemoveNAN
+
 import unittest
 
 
