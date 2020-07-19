@@ -59,7 +59,7 @@ fig,ax = sky.plot(text_kws={'size':20})
 
 we get:
 
-![fruits](./example/fruit_2.png)
+![fruits2](./example/fruit_2.png)
 
 
 
