@@ -19,6 +19,7 @@ class NullsInFrame(SankeyException):
     pass
 
 class LabelMismatchError(SankeyException):
+    """LabelMismatchError is thrown when the provided labels are different from the labels in the dataframe."""
     pass
 
 class Sankey:
@@ -27,7 +28,7 @@ class Sankey:
     pySankey2 currently supports 2-layer and multi-layer Sankey diagram, where user can freely set the box position, strip length, etc.
     The returned matplotlib.figure and matplotlib.axes object allows post modification using matplotlib api.
     """
-    def __init__(self,dataFrame,layerLabels=None,colorDict=None,colorMode="global"):
+    def __init__(self,dataFrame,layerLabels=None,colorDict=None,colorMode="global",stripColor="grey"):
         """
         Parameters:
         -----------
@@ -53,6 +54,10 @@ class Sankey:
             If choosing "layer", colorPalette(aka colorDict) like:
                 {'layer1':{'label1':'some color','label2':'some color','label3':'some color'},
                  'layer2':{'label1':'some color','label4':'some color'}} would be taken. 
+
+        stripColor:str 
+            If choosing "left":
+
         """
 
         self.dataFrame = deepcopy(dataFrame)
@@ -80,6 +85,9 @@ class Sankey:
             if colorMode == "layer":
                 colorDict = self._renameColorDict(colorDict)
             self._colorDict = colorDict
+
+        # stripColor
+        self._stripColor = stripColor
 
     def _getColnamesMapping(self,dataFrame):
         """
@@ -179,12 +187,13 @@ class Sankey:
         return colorDict
 
     def _renameColorDict(self,colorDict):
-        """rename keys of colordict from old column names to 'layer'
-        """
-
+        """rename keys of colordict from old column names to 'layer'"""
         for old_name,new_name in self.colnameMaps.items():
-            colorDict[new_name]=colorDict[old_name]
-            del colorDict[old_name]
+            if old_name == new_name:
+                continue
+            else:
+                colorDict[new_name]=colorDict[old_name]
+                del colorDict[old_name]
         return colorDict
 
     def _setboxPos(self,dataFrame,layerLabels,boxInterv):
@@ -307,7 +316,12 @@ class Sankey:
                     fontsize=fontSize,
                     **text_kws)
 
-    def _plotStrip(self,ax,dataFrame,layerLabels,boxPos,layerPos,stripWidths,kernelSize,stripShrink,strip_kws):
+    def _plotStrip(self,ax,
+                    dataFrame,
+                    layerLabels,
+                    boxPos,layerPos,
+                    stripWidths,kernelSize,
+                    stripShrink,stripColor,strip_kws):
         """
         Render the strip according to box-position(boxPos), layer-position(layerPos) and strip width(stripWidths).
         """
@@ -341,13 +355,29 @@ class Sankey:
                         # X axis of layer.
                         x_start = layerPos[leftLayer]['layerEnd']
                         x_end = layerPos[rightLayer]['layerStart']
-                        # TODO: params control
-                        ax.fill_between(
-                            np.linspace(x_start, x_end, len(ys_top)), ys_bottom, ys_top, alpha=0.4,
-                            color='grey',
-                            #edgecolor='black',
-                            **strip_kws
-                        )
+
+                        if stripColor =="left":
+                            if self.colorMode == "global":
+                                ax.fill_between(
+                                    np.linspace(x_start, x_end, len(ys_top)), ys_bottom, ys_top, alpha=0.4,
+                                    color=self.colorDict[leftLabel],
+                                    #edgecolor='black',
+                                    **strip_kws
+                                )
+                            elif self.colorMode == "layer":
+                                ax.fill_between(
+                                    np.linspace(x_start, x_end, len(ys_top)), ys_bottom, ys_top, alpha=0.4,
+                                    color=self.colorDict[leftLayer][leftLabel],
+                                    #edgecolor='black',
+                                    **strip_kws
+                                )
+                        else:
+                            ax.fill_between(
+                                np.linspace(x_start, x_end, len(ys_top)), ys_bottom, ys_top, alpha=0.4,
+                                color=stripColor,
+                                #edgecolor='black',
+                                **strip_kws
+                            )
 
     def plot(self,figSize=(10,10),
                     fontSize=10,fontPos=(-0.15,0.5),
@@ -454,6 +484,7 @@ class Sankey:
                         self._stripWidths,
                         kernelSize,
                         stripShrink,
+                        self._stripColor,
                         strip_kws)
         plt.gca().axis('off')
 
@@ -517,3 +548,7 @@ class Sankey:
         dict, see doc strings of colorMode in __init__ for details.
         """
         return self._colorDict        
+
+    @property
+    def stripColor(self):
+        return self._stripColor   
