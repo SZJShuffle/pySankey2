@@ -1,0 +1,8 @@
+# Packages
+dist
+*.egg
+*.egg-info
+__pycache__
+# unitest log file
+pysankey2/test/*.pdf
+
