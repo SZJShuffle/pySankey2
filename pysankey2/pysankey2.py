@@ -7,9 +7,10 @@ from matplotlib.colors import to_hex
 
 import numpy as np
 import pandas as pd
-import seaborn as sns
 import math
 from utils import setColorConf,listRemoveNAN
+
+__all__ = ['Sankey']
 
 class SankeyException(Exception):
     pass
