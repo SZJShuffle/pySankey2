@@ -42,6 +42,7 @@ if __name__ == "__main__":
         author_email=AUTHOR_EMAIL,
         url=URL,
         install_requires=INSTALL_REQUIRES,
+        include_package_data=True,
         packages=PACKAGES,
         classifiers=CLASSIFIERS
         )

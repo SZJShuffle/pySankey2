@@ -8,7 +8,7 @@ from matplotlib.colors import to_hex
 import numpy as np
 import pandas as pd
 import math
-from utils import setColorConf,listRemoveNAN
+from .utils import setColorConf,listRemoveNAN
 
 __all__ = ['Sankey']
 
@@ -23,9 +23,9 @@ class LabelMismatchError(SankeyException):
 
 class Sankey:
     """
-    Sankey workflow:
-        1. check whether the input OK. 
-        2. create sankey-plot dataframe.
+    Static Sankey diagram based on matplotlib.
+    pySankey2 currently supports 2-layer and multi-layer Sankey diagram, where user can freely set the box position, strip length, etc.
+    The returned matplotlib.figure and matplotlib.axes object allows post modification using matplotlib api.
     """
     def __init__(self,dataFrame,layerLabels=None,colorDict=None,colorMode="global"):
         """
@@ -53,8 +53,6 @@ class Sankey:
             If choosing "layer", colorPalette(aka colorDict) like:
                 {'layer1':{'label1':'some color','label2':'some color','label3':'some color'},
                  'layer2':{'label1':'some color','label4':'some color'}} would be taken. 
-        
-        
         """
 
         self.dataFrame = deepcopy(dataFrame)
@@ -181,7 +179,8 @@ class Sankey:
         return colorDict
 
     def _renameColorDict(self,colorDict):
-        """rename keys of colordict from old column names to 'layer'"""
+        """rename keys of colordict from old column names to 'layer'
+        """
 
         for old_name,new_name in self.colnameMaps.items():
             colorDict[new_name]=colorDict[old_name]
@@ -191,7 +190,6 @@ class Sankey:
     def _setboxPos(self,dataFrame,layerLabels,boxInterv):
         """
         Set y-axis coordinate position for each box.
- 
         Returns:
         -------
         boxPos:dict, contain y-axis position of each box.
@@ -216,8 +214,7 @@ class Sankey:
     
     def _setLayerPos(self,layerLabels,boxWidth,stripLen):
         """
-        Set x-axis coordinate position for each layer.
-        
+        Set x-axis coordinate position for each layer.        
         Returns:
         --------
         layerPos:dict, contain x-axis position of each layer.
@@ -265,8 +262,6 @@ class Sankey:
     def _setStripPos(self,leftBottom,rightBottom,leftTop,rightTop,kernelSize,stripShrink):
         """
         Smooth the strip by convolution, and create array of y values for each strip.
-
-
         """
         ys_bottom = np.array(50 * [leftBottom] + 50 * [rightBottom])
         ys_bottom = np.convolve(ys_bottom + stripShrink, (1/kernelSize) * np.ones(kernelSize), mode='valid')
@@ -281,7 +276,6 @@ class Sankey:
     def _plotBox(self,ax,boxPos,layerPos,layerLabels,colorDict,fontSize,fontPos,box_kws,text_kws):
         """
         Render the box according to box-position(boxPos) and layer-position(layerPos).
-
         """    
 
         for layer,labels in layerLabels.items():
@@ -363,8 +357,6 @@ class Sankey:
                     box_kws=None,text_kws=None,strip_kws=None,
                     savePath=None):
         """
-        Draw a Sankey diagram.
-
         Parameters:
         ----------   
         figSize:(float, float), default=(10,10).
