@@ -10,12 +10,9 @@ import pandas as pd
 import math
 from .utils import setColorConf,listRemoveNAN
 
-__all__ = ['Sankey']
+__all__ = ['Sankey','LabelMismatchError']
 
 class SankeyException(Exception):
-    pass
-
-class NullsInFrame(SankeyException):
     pass
 
 class LabelMismatchError(SankeyException):
@@ -55,9 +52,10 @@ class Sankey:
                 {'layer1':{'label1':'some color','label2':'some color','label3':'some color'},
                  'layer2':{'label1':'some color','label4':'some color'}} would be taken. 
 
-        stripColor:str 
-            If choosing "left":
-
+        stripColor:str, specified strip color.
+            Default is "grey".
+            If choosing "left": The color of strip would be the same as the box on the left.
+            Specified colors would be passed into  plt.fill_between().
         """
 
         self.dataFrame = deepcopy(dataFrame)
@@ -551,4 +549,5 @@ class Sankey:
 
     @property
     def stripColor(self):
+        """see doc strings of stripColor in __init__ for details."""
         return self._stripColor   

@@ -7,7 +7,7 @@ from collections import defaultdict
 
 from pysankey2 import LabelMismatchError
 from pysankey2 import Sankey
-from utils import setColorConf,listRemoveNAN
+from pysankey2.utils import setColorConf,listRemoveNAN
 
 import unittest
 
@@ -165,8 +165,8 @@ class TestMultilayers(unittest.TestCase):
 
 if __name__ == "__main__":
     # provided some test case for 2 layers test
-    df = pd.read_csv("./test/data/countrys.txt",sep="\t",header=None,names=['First', 'Mid','Last'])
-    df_layer = pd.read_csv("./test/data/countrys.txt",sep="\t",header=None,names=['layer1', 'layer2','layer3'])
+    df = pd.read_csv("./pysankey2/test/data/countrys.txt",sep="\t",header=None,names=['First', 'Mid','Last'])
+    df_layer = pd.read_csv("./pysankey2/test/data/countrys.txt",sep="\t",header=None,names=['layer1', 'layer2','layer3'])
 
     # labels
     global_labels = list(set(df.First).union(set(df.Mid).union(set(df.Last))))
@@ -219,12 +219,30 @@ if __name__ == "__main__":
                 colorMode="global",
                 layerLabels=layer_labels_specified)
 
-    sky_auto_global_colors.plot(savePath = "./test/countrys_auto_global_colors.pdf")
-    sky_auto_layer_colors.plot(savePath = "./test/countrys_auto_layer_colors.pdf")
-    sky_provided_global_colors.plot(savePath = "./test/countrys_provided_global_colors.pdf")
-    sky_provided_layer_colors.plot(savePath = "./test/countrys_provided_layer_colors.pdf")
-    sky_provided_layer_labels.plot(savePath = "./test/countrys_provided_layer_labels.pdf")
+    # provided layerlabels 
+    sky_provided_global_strip_color1 = Sankey(df,
+                colorDict=global_colors,
+                colorMode="global",
+                stripColor="left")
 
+    sky_provided_global_strip_color2 = Sankey(df,
+                colorDict=global_colors,
+                colorMode="global",
+                stripColor="#aec7e8")
+
+    sky_provided_layer_strip_color = Sankey(df_layer,
+                colorDict=layer_colors,
+                colorMode="layer",
+                stripColor="left")
+
+    sky_auto_global_colors.plot(savePath = "./pysankey2/test/countrys_auto_global_colors.pdf")
+    sky_auto_layer_colors.plot(savePath = "./pysankey2/test/countrys_auto_layer_colors.pdf")
+    sky_provided_global_colors.plot(savePath = "./pysankey2/test/countrys_provided_global_colors.pdf")
+    sky_provided_layer_colors.plot(savePath = "./pysankey2/test/countrys_provided_layer_colors.pdf")
+    sky_provided_layer_labels.plot(savePath = "./pysankey2/test/countrys_provided_layer_labels.pdf")
+    sky_provided_global_strip_color1.plot(savePath = "./pysankey2/test/countrys_provided_global_strip_color1.pdf")
+    sky_provided_global_strip_color2.plot(savePath = "./pysankey2/test/countrys_provided_global_strip_color2.pdf")
+    sky_provided_layer_strip_color.plot(savePath = "./pysankey2/test/countrys_provided_layer_strip_color.pdf")
     
     testCase = defaultdict(dict)
 

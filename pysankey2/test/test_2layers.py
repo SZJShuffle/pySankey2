@@ -5,7 +5,7 @@ import pandas as pd
 from collections import defaultdict
 from pysankey2 import LabelMismatchError
 from pysankey2 import Sankey
-from utils import setColorConf,listRemoveNAN
+from pysankey2.utils import setColorConf,listRemoveNAN
 import unittest
 
 
@@ -106,7 +106,7 @@ class TestTwolayers(unittest.TestCase):
             elif "global_colors" in sky:
                 # global_colors
                 self.assertEqual(testCase['colors']['global_colors'],testCase['sankeys'][sky].colorDict)
-
+      
     def test_colorMode_Error(self):
         with self.assertRaises(ValueError):
             Sankey(df,colorMode="glb")
@@ -132,7 +132,8 @@ class TestTwolayers(unittest.TestCase):
             Sankey(df_layer,
                     colorMode="global",
                     layerLabels=mism_labs)
-                
+
+
     def test_kws_Error(self):
         # box text strip
         with self.assertRaises(TypeError):
@@ -143,11 +144,11 @@ class TestTwolayers(unittest.TestCase):
 
         with self.assertRaises(TypeError):
             Sankey(df_layer,colorMode="global").plot(strip_kws ='strip')
-
+    
 if __name__ == "__main__":
     # provided some test case for 2 layers test
-    df = pd.read_csv("./test/data/fruits.txt",sep=" ",header=None,names=['From', 'To'])
-    df_layer = pd.read_csv("./test/data/fruits.txt",sep=" ",header=None,names=['layer1', 'layer2'])
+    df = pd.read_csv("./pysankey2/test/data/fruits.txt",sep=" ",header=None,names=['From', 'To'])
+    df_layer = pd.read_csv("./pysankey2/test/data/fruits.txt",sep=" ",header=None,names=['layer1', 'layer2'])
     
     # labels
     global_labels =  list(set(df.From).union(set(df.To)))
@@ -185,12 +186,31 @@ if __name__ == "__main__":
                 colorMode="global",
                 layerLabels=layer_labels_specified)
 
-    sky_auto_global_colors.plot(savePath = "./test/fruits_auto_global_colors.pdf")
-    sky_auto_layer_colors.plot(savePath = "./test/fruits_auto_layer_colors.pdf")
-    sky_provided_global_colors.plot(savePath = "./test/fruits_provided_global_colors.pdf")
-    sky_provided_layer_colors.plot(savePath = "./test/fruits_provided_layer_colors.pdf")
-    sky_provided_layer_labels.plot(savePath = "./test/fruits_provided_layer_labels.pdf")
+    # provided layerlabels 
+    sky_provided_global_strip_color1 = Sankey(df,
+                colorDict=global_colors,
+                colorMode="global",
+                stripColor="left")
 
+    sky_provided_global_strip_color2 = Sankey(df,
+                colorDict=global_colors,
+                colorMode="global",
+                stripColor="#aec7e8")
+
+    sky_provided_layer_strip_color = Sankey(df_layer,
+                colorDict=layer_colors,
+                colorMode="layer",
+                stripColor="left")
+
+    sky_auto_global_colors.plot(savePath = "./pysankey2/test/fruits_auto_global_colors.pdf")
+    sky_auto_layer_colors.plot(savePath = "./pysankey2/test/fruits_auto_layer_colors.pdf")
+    sky_provided_global_colors.plot(savePath = "./pysankey2/test/fruits_provided_global_colors.pdf")
+    sky_provided_layer_colors.plot(savePath = "./pysankey2/test/fruits_provided_layer_colors.pdf")
+    sky_provided_layer_labels.plot(savePath = "./pysankey2/test/fruits_provided_layer_labels.pdf")
+    sky_provided_global_strip_color1.plot(savePath = "./pysankey2/test/fruits_provided_global_strip_color1.pdf")
+    sky_provided_global_strip_color2.plot(savePath = "./pysankey2/test/fruits_provided_global_strip_color2.pdf")
+    sky_provided_layer_strip_color.plot(savePath = "./pysankey2/test/fruits_provided_layer_strip_color.pdf")
+    
     testCase = defaultdict(dict)
 
     testCase['dfs']['df'] = df
@@ -202,6 +222,10 @@ if __name__ == "__main__":
     testCase['sankeys']['provided_layer_colors'] = sky_provided_layer_colors
     testCase['sankeys']['provided_layer_labels'] = sky_provided_layer_labels
 
+    testCase['sankeys']['provided_layer_labels'] = sky_provided_layer_labels
+    testCase['sankeys']['provided_layer_labels'] = sky_provided_layer_labels
+    testCase['sankeys']['provided_layer_labels'] = sky_provided_layer_labels
+    
     testCase['labels']['global_labels'] = global_labels
     testCase['labels']['layer_labels'] = layer_labels
     testCase['labels']['layer_labels_specified'] = layer_labels_specified
