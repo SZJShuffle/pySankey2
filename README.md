@@ -1,11 +1,17 @@
 # pySankey2
 pySankey2 was developed to draw static Sankey diagrams based on matplotlib. 
 
-While the original version of [pysankey](https://github.com/anazalea/pySankey) was developed by anazalea et al. , this version only supports 2-layer Sankey diagrams, and the settable parameters are limited.
-
-pySankey2 expands the original version's functions to support multi-layer Sankey diagrams and allows user to set parameters more freely.
+While the original version of [pysankey](https://github.com/anazalea/pySankey) was developed by anazalea et al. , this version only supports 2-layer Sankey diagrams, and the settable parameters are limited. pySankey2 expands the original version's functions to support multi-layer Sankey diagrams and allows user to set parameters more flexibly.
 
 ## Installation
+
+- v0.1.0
+
+pysankey2-v0.1.0 is available at [here](https://github.com/SZJShuffle/pySankey2/releases/download/v0.1.0/pysankey2-0.1.0.zip), you can install locally via pip cmd after downloading:
+
+```
+pip install pysankey2-0.1.0.zip
+```
 
 - Development version
 
