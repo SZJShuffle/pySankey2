@@ -5,4 +5,8 @@ dist
 __pycache__
 # unitest log file
 pysankey2/test/*.pdf
+# TODO
+todo.txt
+# log file
+pySankey2_Arch.xmind
 
